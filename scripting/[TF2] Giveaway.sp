@@ -9,6 +9,7 @@ bool g_bGARunning;
 int g_iNumber[MAXPLAYERS + 1] =  { -1, ... };
 int g_Time;
 char g_sGARedeemCode[64], g_sGAMessage[64];
+Handle g_Timer;
 
 ConVar gcv_Time;
 
@@ -80,7 +81,7 @@ public Action Command_StartGiveAway(int client, int args)
 	g_bGARunning = true;
 	strcopy(g_sGARedeemCode, sizeof(g_sGARedeemCode), arg2);
 	strcopy(g_sGAMessage, sizeof(g_sGAMessage), text[len]);
-	CreateTimer(1.0, Timer_CountDown, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+	g_Timer = CreateTimer(1.0, Timer_CountDown, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 	CPrintToChatAll("{red}[{default}SM{red}] {red}%N {unusual}Started Giveaway event! {red}%s{unusual}.", client, g_sGAMessage);
 	return Plugin_Handled;
 }
@@ -95,6 +96,7 @@ public Action Command_AbortGiveAway(int client, int args)
 	
 	g_bGARunning = false;
 	CShowActivity2(client, "{red}[{default}SM{red}]{default} ", "Stopped the {unusual}Giveaway{default} event.");
+	delete g_Timer;
 	return Plugin_Handled;
 }
 
@@ -154,6 +156,7 @@ public Action Timer_CountDown(Handle timer)
 	if (g_Time <= 0)
 	{
 		g_bGARunning = false;
+		g_Timer = null;
 		
 		int winner = GetWinner();
 		if (winner == -1)
