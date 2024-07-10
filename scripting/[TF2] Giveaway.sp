@@ -26,16 +26,16 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-	gcv_Time = CreateConVar("sm_giveaway_time", "20", "Duartion of the giveaway event.", _, true, 10.0);
+	gcv_Time = CreateConVar("sm_giveaway_time", "20", "Duration of the giveaway event.", _, true, 10.0);
 	g_Time = gcv_Time.IntValue;
-	
+
 	LoadTranslations("common.phrases");
-	RegAdminCmd("sm_startgiveaway", Command_StartGiveAway, ADMFLAG_RCON);
-	RegAdminCmd("sm_sga", Command_StartGiveAway, ADMFLAG_RCON);
-	RegAdminCmd("sm_abortgiveaway", Command_AbortGiveAway, ADMFLAG_RCON);
-	RegAdminCmd("sm_aga", Command_AbortGiveAway, ADMFLAG_RCON);
-	RegConsoleCmd("sm_giveaway", Command_GiveAway);
-	RegConsoleCmd("sm_ga", Command_GiveAway);
+	RegAdminCmd("sm_startgiveaway", Command_StartGiveAway, ADMFLAG_RCON, "Starts a giveaway event.");
+	RegAdminCmd("sm_sga", Command_StartGiveAway, ADMFLAG_RCON, "Alias for starting a giveaway event.");
+	RegAdminCmd("sm_abortgiveaway", Command_AbortGiveAway, ADMFLAG_RCON, "Aborts the current giveaway event.");
+	RegAdminCmd("sm_aga", Command_AbortGiveAway, ADMFLAG_RCON, "Alias for aborting a giveaway event.");
+	RegConsoleCmd("sm_giveaway", Command_GiveAway, "Enters the current giveaway event.");
+	RegConsoleCmd("sm_ga", Command_GiveAway, "Alias for entering the giveaway event.");
 }
 
 public void OnMapStart()
@@ -247,24 +247,25 @@ int GetMatched(const int iNumber)
 
 int GetWinner()
 {
-	bool noOne = true;
+	int validClients[MaxClients + 1];
+	int numValidClients = 0;
+	
+	// Populate the array with valid clients
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (IsValidClient(i) && g_iNumber[i] > -1)
 		{
-			noOne = false;
-			break;
+			validClients[numValidClients++] = i;
 		}
 	}
 	
-	if (noOne)
+	// Check if there are no valid clients
+	if (numValidClients == 0)
 		return -1;
 	
-	int winner;
-	do 
-		winner = GetRandomInt(1, MaxClients);
-	while (!IsValidClient(winner) || g_iNumber[winner] == -1);
-	return winner;
+	// Select a random winner from the array of valid clients
+	int winnerIndex = GetRandomInt(0, numValidClients - 1);
+	return validClients[winnerIndex];
 }
 
 void ClientParticle(int client, const char[] effect, float fPos[3], float time)
@@ -292,7 +293,7 @@ public Action Timer_KillEntity(Handle timer, any prop)
 {
 	if (IsValidEntity(prop))
 		AcceptEntityInput(prop, "Kill");
-	return Plugin_Continue;
+	return Plugin_Stop;
 }
 
 bool IsValidClient(const int client)
